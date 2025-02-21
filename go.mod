@@ -1,4 +1,4 @@
-module github.com/irvingpop/honeycomb-derived-column-validator
+module github.com/honeycombio/honeycomb-derived-column-validator
 
 go 1.23.6
 

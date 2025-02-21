@@ -9,7 +9,7 @@ import (
 	"sync"
 
 	"github.com/antlr4-go/antlr/v4"
-	"github.com/irvingpop/honeycomb-derived-column-validator/pkg/api"
+	"github.com/honeycombio/honeycomb-derived-column-validator/pkg/api"
 )
 
 // Debug controls whether debug logging is printed.

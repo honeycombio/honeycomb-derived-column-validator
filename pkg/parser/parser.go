@@ -1,7 +1,7 @@
 package parser
 
 import (
-	"github.com/irvingpop/honeycomb-derived-column-validator/pkg/api"
+	"github.com/honeycombio/honeycomb-derived-column-validator/pkg/api"
 )
 
 type ParseError struct {

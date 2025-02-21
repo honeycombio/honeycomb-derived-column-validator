@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/irvingpop/honeycomb-derived-column-validator/pkg/parser"
+	"github.com/honeycombio/honeycomb-derived-column-validator/pkg/parser"
 )
 
 type Config struct {

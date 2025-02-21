@@ -12,7 +12,7 @@ This tool helps validate derived column expressions used in Honeycomb by parsing
 
 After installing the tool via:
 
-    go install github.com/irvingpop/honeycomb-derived-column-validator
+    go install github.com/honeycombio/honeycomb-derived-column-validator
 
 You can run the validator with:
 
