@@ -252,6 +252,65 @@ MUL(DIV($cache_hits, $total_requests), 100)
 BUCKET(LOG10($request_count), 0.5, 0, 6)
 ```
 
+### Advanced SLI with Timezone and Business Hours
+
+**Complex SLI: Sydney Business Hours Latency with DST Detection**
+```
+IF(
+  OR(NOT(EXISTS($trace.trace_id)), EXISTS($trace.parent_id)),
+  null,
+  IF(
+    AND(
+      GTE(INT(FORMAT_TIME("%m%d", EVENT_TIMESTAMP())), 406),
+      LT(INT(FORMAT_TIME("%m%d", EVENT_TIMESTAMP())), 1005)
+    ),
+    AND(
+      GTE(MOD(SUM(INT(FORMAT_TIME("%H", EVENT_TIMESTAMP())), 11), 24), 9),
+      LT(MOD(SUM(INT(FORMAT_TIME("%H", EVENT_TIMESTAMP())), 11), 24), 17),
+      NOT(IN(FORMAT_TIME("%A", SUM(EVENT_TIMESTAMP(), MUL(11, 3600))), "Saturday", "Sunday")),
+      LT($duration_ms, 450)
+    ),
+    AND(
+      GTE(MOD(SUM(INT(FORMAT_TIME("%H", EVENT_TIMESTAMP())), 10), 24), 9),
+      LT(MOD(SUM(INT(FORMAT_TIME("%H", EVENT_TIMESTAMP())), 10), 24), 17),
+      NOT(IN(FORMAT_TIME("%A", SUM(EVENT_TIMESTAMP(), MUL(10, 3600))), "Saturday", "Sunday")),
+      LT($duration_ms, 450)
+    )
+  )
+)
+```
+
+This complex SLI demonstrates several advanced patterns:
+
+**1. Trace Filtering**: Only processes root spans (`trace.trace_id` exists, `trace.parent_id` doesn't)
+
+**2. Automatic DST Detection**:
+- Uses `FORMAT_TIME("%m%d")` to get date as MMDD integer (e.g., 406 = April 6)
+- Detects Sydney DST period: April 6 (406) to October 4 (1004)
+- Automatically switches between UTC+10 (standard) and UTC+11 (daylight saving)
+
+**3. Manual Timezone Conversion**:
+- `SUM(INT(FORMAT_TIME("%H", EVENT_TIMESTAMP())), offset)` adds timezone offset to UTC hour
+- `MOD(..., 24)` handles day wraparound (e.g., 23 + 11 = 34 → 10)
+- `MUL(offset, 3600)` converts hour offset to seconds for day calculations
+
+**4. Business Hours Logic**:
+- Hour range: 9 AM - 5 PM local time (`GTE(..., 9)` and `LT(..., 17)`)
+- Weekday filter: Excludes Saturday and Sunday using timezone-adjusted timestamps
+- Uses `FORMAT_TIME("%A", ...)` for day names with proper timezone offset
+
+**5. SLI Return Values**:
+- `null`: Not a root trace span OR outside business hours
+- `true`: Latency ≤ 450ms during Sydney business hours
+- `false`: Latency > 450ms during Sydney business hours
+
+**Key Techniques Demonstrated**:
+- Nested conditional logic with multiple IF statements
+- Date-based calculations for seasonal adjustments
+- Manual timezone conversion without built-in timezone functions
+- Complex boolean logic combining time, date, and performance criteria
+- Proper null handling for SLI calculations
+
 ## Important Notes
 
 1. **Column names are case-sensitive**: `$userName` ≠ `$username`
