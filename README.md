@@ -72,3 +72,7 @@ The expected input should look like this:
 And the expected output will be usable as `data.external.resourcename.result.expression`
 
 See the [Terraform examples](examples/terraform/external_data) for more.
+
+## AI Assistant Support
+
+Want to use AI to help write derived columns? Check out [LLM_PROMPT_USAGE.md](LLM_PROMPT_USAGE.md) for instructions on using the included prompt with Cursor, Claude.ai, Claude Code, ChatGPT, Google Gemini, and other AI assistants.
