@@ -255,30 +255,51 @@ BUCKET(LOG10($request_count), 0.5, 0, 6)
 ### Advanced SLI with Timezone and Business Hours
 
 **Complex SLI: Sydney Business Hours Latency with DST Detection**
+Expression:
 ```
 IF(
   OR(NOT(EXISTS($trace.trace_id)), EXISTS($trace.parent_id)),
   null,
   IF(
-    AND(
-      GTE(INT(FORMAT_TIME("%m%d", EVENT_TIMESTAMP())), 406),
-      LT(INT(FORMAT_TIME("%m%d", EVENT_TIMESTAMP())), 1005)
+    IF(
+      AND(
+        GTE(INT(FORMAT_TIME("%m%d", EVENT_TIMESTAMP())), 406),
+        LT(INT(FORMAT_TIME("%m%d", EVENT_TIMESTAMP())), 1005)
+      ),
+      AND(
+        GTE(MOD(SUM(INT(FORMAT_TIME("%H", EVENT_TIMESTAMP())), 11), 24), 9),
+        LT(MOD(SUM(INT(FORMAT_TIME("%H", EVENT_TIMESTAMP())), 11), 24), 17),
+        NOT(IN(FORMAT_TIME("%A", SUM(EVENT_TIMESTAMP(), MUL(11, 3600))), "Saturday", "Sunday"))
+      ),
+      AND(
+        GTE(MOD(SUM(INT(FORMAT_TIME("%H", EVENT_TIMESTAMP())), 10), 24), 9),
+        LT(MOD(SUM(INT(FORMAT_TIME("%H", EVENT_TIMESTAMP())), 10), 24), 17),
+        NOT(IN(FORMAT_TIME("%A", SUM(EVENT_TIMESTAMP(), MUL(10, 3600))), "Saturday", "Sunday"))
+      )
     ),
-    AND(
-      GTE(MOD(SUM(INT(FORMAT_TIME("%H", EVENT_TIMESTAMP())), 11), 24), 9),
-      LT(MOD(SUM(INT(FORMAT_TIME("%H", EVENT_TIMESTAMP())), 11), 24), 17),
-      NOT(IN(FORMAT_TIME("%A", SUM(EVENT_TIMESTAMP(), MUL(11, 3600))), "Saturday", "Sunday")),
-      LT($duration_ms, 450)
-    ),
-    AND(
-      GTE(MOD(SUM(INT(FORMAT_TIME("%H", EVENT_TIMESTAMP())), 10), 24), 9),
-      LT(MOD(SUM(INT(FORMAT_TIME("%H", EVENT_TIMESTAMP())), 10), 24), 17),
-      NOT(IN(FORMAT_TIME("%A", SUM(EVENT_TIMESTAMP(), MUL(10, 3600))), "Saturday", "Sunday")),
-      LT($duration_ms, 450)
-    )
+    LT($duration_ms, 450),
+    null
   )
 )
 ```
+
+Logic Flow:
+1. **Root Span Check**: Is this event a root trace span?
+   - If `trace_id` doesn't exist OR `parent_id` exists → **Return `null`** (not a root span)
+   - If `trace_id` exists AND `parent_id` doesn't exist → Continue to step 2
+
+2. **Business Hours Check**: Is it during Sydney business hours?
+   - Check DST period first: If April 6 - October 4 (MMDD: 406 ≤ date < 1005)
+     - Use DST timezone (UTC+11): Check if 9AM-5PM weekdays
+   - Otherwise (Standard Time period):
+     - Use Standard timezone (UTC+10): Check if 9AM-5PM weekdays
+   - If business hours condition passes → Continue to step 3
+   - If business hours condition fails (weekend/after hours) → **Return `null`** (not measured)
+
+3. **Latency Check**: Is the request fast enough?
+   - If `duration_ms < 450` → **Return `true`** (SLI success)
+   - If `duration_ms ≥ 450` → **Return `false`** (SLI failure)
+
 
 This complex SLI demonstrates several advanced patterns:
 
