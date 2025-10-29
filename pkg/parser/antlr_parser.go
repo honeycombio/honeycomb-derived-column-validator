@@ -215,9 +215,19 @@ func (l *antlrListener) ExitLiteral(c *LiteralContext) {
 	var err error
 	switch {
 	case c.INT() != nil:
-		static, err = strconv.ParseInt(c.INT().GetText(), 10, 64)
+		var val int64
+		val, err = strconv.ParseInt(c.INT().GetText(), 10, 64)
+		if c.OP_MATH_MINUS() != nil {
+			val = -val
+		}
+		static = val
 	case c.FLOAT() != nil:
-		static, err = strconv.ParseFloat(c.FLOAT().GetText(), 64)
+		var val float64
+		val, err = strconv.ParseFloat(c.FLOAT().GetText(), 64)
+		if c.OP_MATH_MINUS() != nil {
+			val = -val
+		}
+		static = val
 	case c.TRUE() != nil:
 		static = true
 	case c.FALSE() != nil:
