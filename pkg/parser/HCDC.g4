@@ -3,10 +3,20 @@
 
 grammar HCDC ;
 
-derived: fun EOF;
+derived: expr EOF;
 
+// List operators in precedence order.
 expr
-    : fun
+    : op=OP_NOT expr
+    | expr op=OP_MATH_HIGH expr
+    | expr op=OP_MATH_MINUS expr
+    | expr op=OP_MATH_PLUS expr
+    | expr op=OP_COMPARE expr
+    | expr op=OP_EQUAL expr
+    | expr op=OP_AND expr
+    | expr op=OP_OR expr
+    | '(' expr ')'
+    | fun
     | column
     | literal
     ;
@@ -27,8 +37,8 @@ column
     ;
 
 literal
-    : INT
-    | FLOAT
+    : OP_MATH_MINUS? INT
+    | OP_MATH_MINUS? FLOAT
     | RAWSTRING
     | STRING
     | TRUE
@@ -36,7 +46,12 @@ literal
     | NULL
     ;
 
-funcname: FUNCNAME;
+// AND and OR will be parsed as operators instead of FUNCNAME.
+funcname
+    : FUNCNAME
+    | OP_AND
+    | OP_OR
+    ;
 
 // Order here is important: prefer specific tokens over function names.
 // Note this uses some unicode property identifiers, enumerated here:
@@ -45,6 +60,33 @@ TRUE: 'true';
 FALSE: 'false';
 NULL: 'null';
 COLUMN: '$' COLRUNE+;
+
+OP_NOT: '!';
+
+OP_MATH_HIGH
+    : '*'
+    | '/'
+    | '%'
+    ;
+
+OP_MATH_PLUS : '+';
+OP_MATH_MINUS : '-';
+
+OP_COMPARE
+    : '<'
+    | '<='
+    | '>'
+    | '>='
+    ;
+
+OP_EQUAL
+    : '='
+    | '!='
+    ;
+
+OP_AND: 'AND';
+OP_OR: 'OR';
+
 FUNCNAME: [a-zA-Z] [a-zA-Z0-9_]+;
 
 fragment COLRUNE
@@ -61,12 +103,12 @@ fragment COLRUNE
     ;
 
 
-INT: '-'? DIGITS;
+INT: DIGITS;
 
 // Support leading decimal, because the original parser did.
 FLOAT
-    : '-'? DIGITS ('.' DIGITS)? ([eE] [+-]? DIGITS)?
-    | '-'? '.' DIGITS ([eE] [+-]? DIGITS)?
+    : DIGITS ('.' DIGITS)? ([eE] [+-]? DIGITS)?
+    | '.' DIGITS ([eE] [+-]? DIGITS)?
     ;
 
 fragment DIGITS: [0-9]+;

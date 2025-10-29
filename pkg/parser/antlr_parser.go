@@ -110,9 +110,7 @@ func (l *antlrListener) result() (*api.DerivedValue, error) {
 // the underlying function.
 // Treat operators exactly like functions, pushing the relevant DC value onto
 // the stack - just need to unify the exit function, which is the same for all.
-func (l *antlrListener) EnterFun(c *FunContext) {
-	name := c.Funcname().GetText()
-
+func (l *antlrListener) enterFunOrOp(name string) {
 	op := lookupOp(name)
 	if op == api.DeriveOp_D_NONE {
 		l.err("invalid function:", name)
@@ -128,7 +126,7 @@ func (l *antlrListener) EnterFun(c *FunContext) {
 	}
 }
 
-func (l *antlrListener) ExitFun(c *FunContext) {
+func (l *antlrListener) exitFunOrOp() {
 	if len(l.vals) <= 1 {
 		return
 	}
@@ -141,10 +139,49 @@ func (l *antlrListener) ExitFun(c *FunContext) {
 	val.Params = append(val.Params, &api.DerivedParam{Value: &api.DerivedParam_Derived{Derived: param}})
 }
 
-func (l *antlrListener) ExitColumn(c *ColumnContext) {
-	if len(l.vals) == 0 || l.parseErr != nil {
+func (l *antlrListener) EnterFun(c *FunContext) {
+	l.enterFunOrOp(c.Funcname().GetText())
+}
+
+func (l *antlrListener) ExitFun(c *FunContext) {
+	l.exitFunOrOp()
+}
+
+// Any given expression may contain an operator.
+func (l *antlrListener) EnterExpr(c *ExprContext) {
+	if c.GetOp() != nil {
+		name := c.GetOp().GetText()
+		l.enterFunOrOp(name)
+	}
+}
+
+func (l *antlrListener) ExitExpr(c *ExprContext) {
+	if c.GetOp() != nil {
+		l.exitFunOrOp()
+	}
+}
+
+// If we found a value and the stack is empty, wrap it in a COALESCE so we
+// have a valid expression.
+// There's no strong reason to support this, but it makes the parser simpler
+// and (with operators) avoid spurious-seeming errors if you want to test with
+// a plain literal or column.
+func (l *antlrListener) handleValueAtRoot() {
+	if len(l.vals) != 0 {
 		return
 	}
+
+	l.vals = append(l.vals, &api.DerivedValue{
+		Op:     api.DeriveOp_D_COALESCE,
+		Params: make([]*api.DerivedParam, 0, 1),
+	})
+}
+
+func (l *antlrListener) ExitColumn(c *ColumnContext) {
+	if l.parseErr != nil {
+		return
+	}
+	l.handleValueAtRoot()
 
 	// // Get the token and strip off the leading $
 	var ident string
@@ -169,9 +206,10 @@ func (l *antlrListener) ExitColumn(c *ColumnContext) {
 }
 
 func (l *antlrListener) ExitLiteral(c *LiteralContext) {
-	if len(l.vals) == 0 || l.parseErr != nil {
+	if l.parseErr != nil {
 		return
 	}
+	l.handleValueAtRoot()
 
 	var static any
 	var err error
