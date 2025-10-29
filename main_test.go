@@ -28,6 +28,21 @@ func TestParseDerived(t *testing.T) {
 			input:   "IF(1,2)",
 			wantErr: false,
 		},
+		{
+			name:    "infix expression",
+			input:   "$a + 1",
+			wantErr: false,
+		},
+		{
+			name:    "degenerate infix expression",
+			input:   `$"0"-5-$"1"--5`,
+			wantErr: false,
+		},
+		{
+			name:    "and is a func and an op",
+			input:   `$foo AND AND($bar AND $baz, $quux)`,
+			wantErr: false,
+		},
 	}
 
 	for _, tc := range tests {
@@ -47,6 +62,7 @@ func TestParseDerived(t *testing.T) {
 		})
 	}
 }
+
 func TestProcessInput(t *testing.T) {
 	tests := []struct {
 		name        string

@@ -49,18 +49,20 @@ func lookupOp(str string) api.DeriveOp {
 		return api.DeriveOp_D_IF
 	case "COALESCE":
 		return api.DeriveOp_D_COALESCE
-	case "NOT":
+	case "NOT", "!":
 		return api.DeriveOp_D_NOT
-	case "LT":
+	case "LT", "<":
 		return api.DeriveOp_D_LT
-	case "LTE":
+	case "LTE", "<=":
 		return api.DeriveOp_D_LTE
-	case "GT":
+	case "GT", ">":
 		return api.DeriveOp_D_GT
-	case "GTE":
+	case "GTE", ">=":
 		return api.DeriveOp_D_GTE
-	case "EQUALS":
+	case "EQUALS", "=":
 		return api.DeriveOp_D_IN
+	case "!=":
+		return api.DeriveOp_D_NOT_IN
 	case "IN":
 		return api.DeriveOp_D_IN
 	case "AND":
@@ -79,13 +81,13 @@ func lookupOp(str string) api.DeriveOp {
 		return api.DeriveOp_D_PREFIX
 	case "ENDS_WITH":
 		return api.DeriveOp_D_SUFFIX
-	case "SUM":
+	case "SUM", "+":
 		return api.DeriveOp_D_SUM
-	case "SUB":
+	case "SUB", "-":
 		return api.DeriveOp_D_SUB
-	case "MUL":
+	case "MUL", "*":
 		return api.DeriveOp_D_MUL
-	case "DIV":
+	case "DIV", "/":
 		return api.DeriveOp_D_DIV
 	case "INT":
 		return api.DeriveOp_D_INT
@@ -113,7 +115,7 @@ func lookupOp(str string) api.DeriveOp {
 		return api.DeriveOp_D_EVENT_TIMESTAMP
 	case "INGEST_TIMESTAMP":
 		return api.DeriveOp_D_INGEST_TIMESTAMP
-	case "MOD":
+	case "MOD", "%":
 		return api.DeriveOp_D_MOD
 	case "FORMAT_TIME":
 		return api.DeriveOp_D_FORMAT_TIME
@@ -123,8 +125,6 @@ func lookupOp(str string) api.DeriveOp {
 		return api.DeriveOp_D_SWITCH
 	case "TO_LOWER":
 		return api.DeriveOp_D_TO_LOWER
-	case "SEARCH":
-		return api.DeriveOp_D_SEARCH
 	default:
 		return api.DeriveOp_D_NONE
 	}

@@ -47,10 +47,11 @@ const (
 	DeriveOp_D_UNIX_TIMESTAMP DeriveOp = 23
 	DeriveOp_D_REG_COUNT      DeriveOp = 24
 	DeriveOp_D_TO_LOWER       DeriveOp = 55
-	DeriveOp_D_SEARCH         DeriveOp = 57
 	// Event metadata
 	DeriveOp_D_EVENT_TIMESTAMP  DeriveOp = 42
 	DeriveOp_D_INGEST_TIMESTAMP DeriveOp = 43
+	// For != operator
+	DeriveOp_D_NOT_IN DeriveOp = 58
 )
 
 type isDerivedParam_Value interface {
@@ -191,30 +192,3 @@ type DerivedValue struct {
 // }
 
 // var xxx_messageInfo_DerivedValue proto.InternalMessageInfo
-
-type FilterOp int32
-
-const (
-	FilterOp_UNKNOWN                FilterOp = 0
-	FilterOp_EQUAL                  FilterOp = 1
-	FilterOp_NOT_EQUAL              FilterOp = 2
-	FilterOp_GT                     FilterOp = 3
-	FilterOp_GTE                    FilterOp = 4
-	FilterOp_LT                     FilterOp = 5
-	FilterOp_LTE                    FilterOp = 6
-	FilterOp_PREFIX                 FilterOp = 7
-	FilterOp_NOT_PREFIX             FilterOp = 8
-	FilterOp_HAS_VALUE              FilterOp = 9
-	FilterOp_NOT_HAS_VALUE          FilterOp = 10
-	FilterOp_CONTAINS               FilterOp = 11
-	FilterOp_NOT_CONTAINS           FilterOp = 12
-	FilterOp_IN                     FilterOp = 15
-	FilterOp_NOT_IN                 FilterOp = 16
-	FilterOp_SEARCH                 FilterOp = 17
-	FilterOp_SUFFIX                 FilterOp = 18
-	FilterOp_NOT_SUFFIX             FilterOp = 19
-)
-
-func FilterOpIsUnary(op FilterOp) bool {
-	return op == FilterOp_HAS_VALUE || op == FilterOp_NOT_HAS_VALUE
-}
