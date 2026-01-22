@@ -129,3 +129,34 @@ func lookupOp(str string) api.DeriveOp {
 		return api.DeriveOp_D_NONE
 	}
 }
+
+type TimeseriesOp int
+
+const (
+	TimeseriesOpNone TimeseriesOp = iota
+	TimeseriesOpRawMetric
+	TimeseriesOpLast
+	TimeseriesOpSummarize
+	TimeseriesOpIncrease
+	TimeseriesOpRate
+
+	TimeseriesOps_Len // I am a placeholder to allow for iterating over all ops
+	// DO NOT ADD ANY OPS BELOW THE PLACEHOLDER
+)
+
+func lookupTimeseriesOp(str string) TimeseriesOp {
+	switch str {
+	case "RAW_METRIC":
+		return TimeseriesOpRawMetric
+	case "LAST":
+		return TimeseriesOpLast
+	case "RATE":
+		return TimeseriesOpRate
+	case "INCREASE":
+		return TimeseriesOpIncrease
+	case "SUMMARIZE":
+		return TimeseriesOpSummarize
+	default:
+		return TimeseriesOpNone
+	}
+}
