@@ -80,6 +80,8 @@ type antlrListener struct {
 
 	vals     []*api.DerivedValue
 	parseErr error
+
+	hasTimeseriesExpression bool
 }
 
 func (l *antlrListener) SyntaxError(
@@ -112,8 +114,16 @@ func (l *antlrListener) result() (*api.DerivedValue, error) {
 // the stack - just need to unify the exit function, which is the same for all.
 func (l *antlrListener) enterFunOrOp(name string) {
 	op := lookupOp(name)
+
 	if op == api.DeriveOp_D_NONE {
-		l.err("invalid function:", name)
+		if tsOp := lookupTimeseriesOp(name); tsOp != TimeseriesOpNone {
+			if l.hasTimeseriesExpression {
+				l.err("timeseries operations cannot be nested")
+			}
+			l.hasTimeseriesExpression = true
+		} else {
+			l.err("invalid function:", name)
+		}
 	}
 
 	l.vals = append(l.vals, &api.DerivedValue{

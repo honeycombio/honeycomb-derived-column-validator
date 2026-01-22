@@ -43,6 +43,31 @@ func TestParseDerived(t *testing.T) {
 			input:   `$foo AND AND($bar AND $baz, $quux)`,
 			wantErr: false,
 		},
+		{
+			name:    "timseries function",
+			input:   "MAX(LAST(1))",
+			wantErr: false,
+		},
+		{
+			name:    "nested timeseries function",
+			input:   "RATE(LAST(1))",
+			wantErr: true,
+			errMsg:  "timeseries operations cannot be nested",
+		},
+		{
+			// Not "nested" per se but we aren't allowed more than one TS op
+			// per expression.
+			name:    "multiple timeseries functions",
+			input:   "COALESCE(RATE(1),RATE(2))",
+			wantErr: true,
+			errMsg:  "timeseries operations cannot be nested",
+		},
+		{
+			name:    "unknown function",
+			input:   "DECREASE(1)",
+			wantErr: true,
+			errMsg:  "invalid function: DECREASE",
+		},
 	}
 
 	for _, tc := range tests {
